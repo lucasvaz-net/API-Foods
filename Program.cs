@@ -14,6 +14,11 @@ builder.Services.AddControllers();
 builder.Services.AddSingleton<DatabaseConnection>(sp =>
     new DatabaseConnection(builder.Configuration.GetConnectionString("DefaultConnection")));
 builder.Services.AddScoped<FoodDal>();
+builder.Services.AddScoped<UserDal>(sp => new UserDal(builder.Configuration.GetConnectionString("DefaultConnection")));
+builder.Services.AddScoped<FoodDiaryDal>(sp => new FoodDiaryDal(builder.Configuration.GetConnectionString("DefaultConnection")));
+builder.Services.AddScoped<PremiumSubscriptionDal>(sp => new PremiumSubscriptionDal(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+
 
 // Swagger/OpenAPI setup
 builder.Services.AddEndpointsApiExplorer();
@@ -21,12 +26,9 @@ builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+
+app.UseSwagger();
+app.UseSwaggerUI();
 
 app.UseHttpsRedirection();
 
