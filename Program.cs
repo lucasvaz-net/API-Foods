@@ -4,13 +4,12 @@ using API.Data.API.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Carrega o arquivo appsettings.json
+
 builder.Configuration.AddJsonFile("appsettings.json");
 
-// Add services to the container.
+
 builder.Services.AddControllers();
 
-// Injetando a classe de conexão ao banco de dados
 builder.Services.AddSingleton<DatabaseConnection>(sp =>
     new DatabaseConnection(builder.Configuration.GetConnectionString("DefaultConnection")));
 builder.Services.AddScoped<FoodDal>();
@@ -19,7 +18,7 @@ builder.Services.AddScoped<FoodDiaryDal>(sp => new FoodDiaryDal(builder.Configur
 builder.Services.AddScoped<PremiumSubscriptionDal>(sp => new PremiumSubscriptionDal(builder.Configuration.GetConnectionString("DefaultConnection")));
 builder.Services.AddScoped<ApiKeyDal>(sp => new ApiKeyDal(builder.Configuration.GetConnectionString("DefaultConnection"))); // Adicionado
 
-// Swagger/OpenAPI setup
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
