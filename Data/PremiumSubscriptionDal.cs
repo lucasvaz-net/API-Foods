@@ -1,7 +1,6 @@
 ﻿namespace API.Data
 {
-    using API.Models;
-    using System;
+    using global::API.Models;
     using System.Data;
     using System.Data.SqlClient;
 
