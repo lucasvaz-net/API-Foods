@@ -1,7 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using API.Data;
 using API.Models;
-using System.Collections.Generic;
 using API.Filters;
 
 namespace API.Controllers
@@ -12,40 +11,62 @@ namespace API.Controllers
     public class FoodDiaryController : ControllerBase
     {
         private readonly FoodDiaryDal _foodDiaryDal;
+        private readonly UserDal _userDal; // Injeção de dependência do UserDal para acesso ao método GetUserIdFromToken
 
-        public FoodDiaryController(FoodDiaryDal foodDiaryDal)
+        public FoodDiaryController(FoodDiaryDal foodDiaryDal, UserDal userDal)
         {
             _foodDiaryDal = foodDiaryDal;
+            _userDal = userDal; // Inicialização
+        }
+
+        private int? GetUserIdFromToken()
+        {
+            string token = HttpContext.Request.Headers["Authorization"].FirstOrDefault()?.Split(' ').Last();
+
+            if (string.IsNullOrEmpty(token))
+            {
+                return null;
+            }
+
+            return _userDal.GetUserIdByToken(token);
         }
 
         [HttpGet]
-        public IActionResult GetFoodDiaryEntries(int userId)
+        public IActionResult GetFoodDiaryEntries()
         {
-            if (userId <= 0)
+            var userId = GetUserIdFromToken();
+
+            if (!userId.HasValue)
             {
-                return BadRequest("UserId inválido.");
+                return Unauthorized();
             }
 
-            List<FoodDiaryEntry> entries = _foodDiaryDal.GetUserFoodDiary(userId);
+            List<FoodDiaryEntry> entries = _foodDiaryDal.GetUserFoodDiary(userId.Value);
 
             if (entries == null || entries.Count == 0)
             {
-                return NotFound($"Nenhuma entrada encontrada para o usuário com ID {userId}.");
+                return NotFound($"Nenhuma entrada encontrada para o usuário com ID {userId.Value}.");
             }
 
             return Ok(entries);
         }
 
-
         [HttpPost]
         public IActionResult AddFoodToDiary([FromBody] FoodDiary foodDiaryEntry)
         {
-            if (foodDiaryEntry == null || foodDiaryEntry.UserId <= 0 || foodDiaryEntry.Foods.Id <= 0)
+            var userId = GetUserIdFromToken();
+
+            if (!userId.HasValue)
+            {
+                return Unauthorized();
+            }
+
+            if (foodDiaryEntry == null || foodDiaryEntry.Foods.Id <= 0)
             {
                 return BadRequest("Informações inválidas.");
             }
 
-            bool isSuccess = _foodDiaryDal.AddFoodToDiary(foodDiaryEntry.UserId, foodDiaryEntry.Foods.Id, (float)foodDiaryEntry.ServingSize, foodDiaryEntry.Date);
+            bool isSuccess = _foodDiaryDal.AddFoodToDiary(userId.Value, foodDiaryEntry.Foods.Id, (float)foodDiaryEntry.ServingSize, foodDiaryEntry.Date);
             if (isSuccess)
             {
                 return Ok("Entrada adicionada com sucesso!");
@@ -68,8 +89,5 @@ namespace API.Controllers
             }
             return NotFound("A entrada não foi encontrada ou já foi removida.");
         }
-
-
-
     }
 }

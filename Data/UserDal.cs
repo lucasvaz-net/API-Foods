@@ -47,6 +47,32 @@ namespace API.Data
             }
         }
 
+        public string GetHashedPasswordByEmail(string email)
+        {
+            using (SqlConnection connection = new SqlConnection(_connectionString))
+            {
+                connection.Open();
+
+                using (SqlCommand command = new SqlCommand("dbo.sp_GetUserByEmail", connection))
+                {
+                    command.CommandType = CommandType.StoredProcedure;
+                    command.Parameters.AddWithValue("@Email", email);
+
+                    using (SqlDataReader reader = command.ExecuteReader())
+                    {
+                        if (reader.Read())
+                        {
+                            return reader.GetString(reader.GetOrdinal("HashedPassword"));
+                        }
+                    }
+                }
+            }
+
+            return null;  
+        }
+
+
+
         public int? CheckUserCredentials(string email, string hashedPassword)
         {
             int? userId = null;
@@ -140,6 +166,33 @@ namespace API.Data
                 }
             }
         }
+
+        public int? GetUserIdByToken(string token)
+        {
+            int? userId = null;
+
+            using (SqlConnection connection = new SqlConnection(_connectionString))
+            {
+                connection.Open();
+
+                using (SqlCommand command = new SqlCommand("dbo.sp_GetUserByToken", connection))
+                {
+                    command.CommandType = CommandType.StoredProcedure;
+                    command.Parameters.AddWithValue("@token", token);
+
+                    using (SqlDataReader reader = command.ExecuteReader())
+                    {
+                        if (reader.Read())
+                        {
+                            userId = reader.GetInt32(reader.GetOrdinal("id"));
+                        }
+                    }
+                }
+            }
+
+            return userId;
+        }
+
 
 
     }

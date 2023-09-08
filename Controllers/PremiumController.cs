@@ -1,7 +1,7 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using API.Data;
-using API.Models;
+﻿using API.Data;
 using API.Filters;
+using API.Models;
+using Microsoft.AspNetCore.Mvc;
 
 namespace API.Controllers
 {
@@ -11,21 +11,26 @@ namespace API.Controllers
     public class PremiumController : ControllerBase
     {
         private readonly PremiumSubscriptionDal _premiumSubscriptionDal;
+        private readonly UserDal _userDal;
 
-        public PremiumController(PremiumSubscriptionDal premiumSubscriptionDal)
+
+        public PremiumController(PremiumSubscriptionDal premiumSubscriptionDal, UserDal userDal)
         {
             _premiumSubscriptionDal = premiumSubscriptionDal;
+            _userDal = userDal;
         }
-
-        [HttpGet("{userId}")]
-        public IActionResult GetSubscriptionStatus(int userId)
+        [HttpGet]
+        public IActionResult GetSubscriptionStatus()
         {
+            var token = HttpContext.Request.Headers["Authorization"].ToString().Split(" ")[1];
+            var userId = _userDal.GetUserIdByToken(token);
+
             if (userId <= 0)
             {
                 return BadRequest("ID de usuário inválido.");
             }
 
-            var subscription = _premiumSubscriptionDal.GetUserSubscriptionStatus(userId);
+            var subscription = _premiumSubscriptionDal.GetUserSubscriptionStatus((int)userId);
 
             if (subscription == null)
             {
@@ -35,14 +40,18 @@ namespace API.Controllers
             return Ok(subscription);
         }
 
-
         [HttpPost("purchase")]
-        public IActionResult PurchasePremiumSubscription([FromBody] PremiumSubscription subscription)
+        public IActionResult PurchasePremiumSubscription()
         {
-            if (subscription == null || subscription.UserId <= 0)
+            var token = HttpContext.Request.Headers["Authorization"].ToString().Split(" ")[1];
+            var userId = _userDal.GetUserIdByToken(token);
+
+            if (userId <= 0)
             {
-                return BadRequest("Informações inválidas.");
+                return BadRequest("ID de usuário inválido.");
             }
+
+            var subscription = new PremiumSubscription { UserId = (int)userId };
 
             try
             {
@@ -51,10 +60,12 @@ namespace API.Controllers
             }
             catch (Exception ex)
             {
-               
+                // Considere logar a exceção 'ex' para ajudar no debug.
                 return StatusCode(500, "Um erro ocorreu enquanto processava a assinatura.");
             }
         }
+
+
 
 
     }
