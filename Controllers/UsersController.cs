@@ -1,19 +1,26 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using API.Data;
 using API.Models;
+using API.Data.API.Data;
+using API.Filters;
+using Microsoft.AspNetCore.Authorization;
 
 namespace API.Controllers
 {
+   
     [Route("api/[controller]")]
     [ApiController]
     public class UsersController : ControllerBase
     {
         private readonly UserDal _userDal;
+        private readonly UserTokenDal _userTokenDal;
 
-        public UsersController(UserDal userDal)
+        public UsersController(UserDal userDal, UserTokenDal userTokenDal)
         {
             _userDal = userDal;
+            _userTokenDal = userTokenDal;
         }
+
 
         [HttpPost("register")]
         public IActionResult Register([FromBody] Users user)
@@ -39,7 +46,6 @@ namespace API.Controllers
         }
 
 
-
         [HttpPost("login")]
         public IActionResult Login([FromBody] Users userCredentials)
         {
@@ -52,13 +58,22 @@ namespace API.Controllers
 
             if (userId.HasValue && userId.Value > 0)
             {
-                return Ok(new { id = userId.Value });
+                // Recuperar a API key do cabeçalho
+                string apiKey = HttpContext.Request.Headers["ApiKey"].FirstOrDefault();
+                if (string.IsNullOrEmpty(apiKey))
+                {
+                    return BadRequest("API key ausente.");
+                }
+
+                string generatedToken = _userTokenDal.CreateToken(userId.Value, apiKey);
+                return Ok(new { id = userId.Value, token = generatedToken });
             }
 
-            return Unauthorized();  
+            return Unauthorized();
         }
 
 
+        [TokenAuthorize]
         [HttpGet("profile/{userId}")]
         public IActionResult GetProfile(int userId)
         {
@@ -72,6 +87,7 @@ namespace API.Controllers
             return NotFound();  
         }
 
+        [TokenAuthorize]
         [HttpPut("profile")]
         public IActionResult UpdateProfile([FromBody] Users user)
         {
@@ -91,6 +107,26 @@ namespace API.Controllers
                 return StatusCode(500, "Um erro ocorreu enquanto atualizava o perfil.");
             }
         }
+
+
+
+
+        [TokenAuthorize]
+        [HttpPost("logout")]
+        public IActionResult Logout(int userId)
+        {
+            if (userId <= 0)
+            {
+                return BadRequest("UserId inválido.");
+            }
+
+            _userTokenDal.LogoutUser(userId);
+
+            return Ok("Logout realizado com sucesso.");
+        }
+
+
+
 
 
     }

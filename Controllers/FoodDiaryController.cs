@@ -2,9 +2,11 @@
 using API.Data;
 using API.Models;
 using System.Collections.Generic;
+using API.Filters;
 
 namespace API.Controllers
 {
+    [TokenAuthorize]
     [Route("api/[controller]")]
     [ApiController]
     public class FoodDiaryController : ControllerBase

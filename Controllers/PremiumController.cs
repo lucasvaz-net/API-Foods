@@ -1,9 +1,11 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using API.Data;
 using API.Models;
+using API.Filters;
 
 namespace API.Controllers
 {
+    [TokenAuthorize]
     [Route("api/[controller]")]
     [ApiController]
     public class PremiumController : ControllerBase
@@ -49,7 +51,7 @@ namespace API.Controllers
             }
             catch (Exception ex)
             {
-                // Você pode querer logar o erro (ex) aqui.
+               
                 return StatusCode(500, "Um erro ocorreu enquanto processava a assinatura.");
             }
         }

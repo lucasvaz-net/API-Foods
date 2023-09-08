@@ -21,8 +21,8 @@ public class ApiKeyMiddleware
 
             if (string.IsNullOrEmpty(apiKey) || !apiKeyDal.IsApiKeyValid(apiKey))
             {
-                context.Response.StatusCode = 401; // Unauthorized
-                await context.Response.WriteAsync("Invalid API Key");
+                context.Response.StatusCode = 401;
+                await context.Response.WriteAsync("API Key Invalida - A chave deve ser enviada no Header da requisição com nome ApiKey, para maiores informações consulte nossa documentação http://apifood-001-site1.atempurl.com/StaticFiles/docs.html");
                 return;
             }
         }
